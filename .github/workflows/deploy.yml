@@ -10,21 +10,27 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # <--- Updated version
 
       - name: Build Docker image
         run: docker build -t my-devops-app .
 
       - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.0.3  # <--- Updated version
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # Navigate to workspace
             cd /home/ubuntu
+            
+            # Clean up existing containers
             docker stop my-app || true
             docker rm my-app || true
-            docker pull my-devops-app || true
-            docker build -t my-devops-app https://github.com/${{ github.repository }}.git
+            
+            # Re-build and Run
+            # Note: For real MLOps, we eventually want to pull from a Registry 
+            # instead of building on the EC2 to save resources.
+            docker build -t my-devops-app https://github.com/${{ github.repository }}.git#main
             docker run -d --name my-app -p 5000:5000 my-devops-app
